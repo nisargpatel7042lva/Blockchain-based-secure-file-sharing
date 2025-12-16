@@ -1,0 +1,29 @@
+{
+  "name": "tgen-blockchain-file-sharing",
+  "version": "1.0.0",
+  "description": "Blockchain-based secure file sharing with end-to-end encryption",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "contracts:compile": "cd contracts && npx hardhat compile",
+    "contracts:deploy": "cd contracts && npx hardhat run scripts/deploy.js",
+    "setup:contracts": "node scripts/setup-contracts.js",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend:dev": "cd frontend && npm run dev",
+    "install:all": "npm install && cd contracts && npm install && cd ../backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "blockchain",
+    "file-sharing",
+    "ipfs",
+    "polygon",
+    "encryption"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+

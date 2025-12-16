@@ -1,0 +1,245 @@
+import { ethers } from "ethers";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// Load contract ABI
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+let FileRegistryABI;
+
+try {
+  // Try to load from backend artifacts (after setup script)
+  const abiPath = join(__dirname, "../../artifacts/contracts/FileRegistry.sol/FileRegistry.json");
+  const abiFile = readFileSync(abiPath, "utf8");
+  FileRegistryABI = JSON.parse(abiFile);
+} catch (error) {
+  // Fallback: try root artifacts (if running from root)
+  try {
+    const rootAbiPath = join(__dirname, "../../../artifacts/contracts/FileRegistry.sol/FileRegistry.json");
+    const abiFile = readFileSync(rootAbiPath, "utf8");
+    FileRegistryABI = JSON.parse(abiFile);
+  } catch (fallbackError) {
+    console.error("Error loading contract ABI. Please compile contracts and run setup script:");
+    console.error("  cd contracts && npm run compile");
+    console.error("  node scripts/setup-contracts.js");
+    throw new Error("Contract ABI not found. Please compile contracts first.");
+  }
+}
+
+class BlockchainService {
+  constructor() {
+    const rpcUrl = process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc-mumbai.maticvigil.com";
+    const privateKey = process.env.PRIVATE_KEY;
+    const contractAddress = process.env.FILE_REGISTRY_CONTRACT_ADDRESS;
+
+    if (!privateKey) {
+      throw new Error("PRIVATE_KEY not set in environment variables");
+    }
+
+    if (!contractAddress) {
+      throw new Error("FILE_REGISTRY_CONTRACT_ADDRESS not set in environment variables");
+    }
+
+    // Initialize provider and signer
+    this.provider = new ethers.JsonRpcProvider(rpcUrl);
+    this.signer = new ethers.Wallet(privateKey, this.provider);
+    
+    // Initialize contract
+    this.contract = new ethers.Contract(
+      contractAddress,
+      FileRegistryABI.abi,
+      this.signer
+    );
+
+    console.log("Blockchain service initialized");
+    console.log("Contract address:", contractAddress);
+    console.log("Signer address:", this.signer.address);
+  }
+
+  /**
+   * Upload file metadata to blockchain
+   * @param {string} ipfsHash - IPFS hash of the file
+   * @param {string} encryptedKeyHash - Hash of the encrypted encryption key
+   * @returns {Promise<{fileId: string, txHash: string}>}
+   */
+  async uploadFileMetadata(ipfsHash, encryptedKeyHash) {
+    try {
+      const tx = await this.contract.uploadFile(ipfsHash, encryptedKeyHash);
+      const receipt = await tx.wait();
+
+      // Get fileId from events
+      const fileUploadedEvent = receipt.logs.find(
+        (log) => {
+          try {
+            const parsed = this.contract.interface.parseLog(log);
+            return parsed && parsed.name === "FileUploaded";
+          } catch {
+            return false;
+          }
+        }
+      );
+
+      let fileId = null;
+      if (fileUploadedEvent) {
+        const parsed = this.contract.interface.parseLog(fileUploadedEvent);
+        fileId = parsed.args.id.toString();
+      } else {
+        // Fallback: get file count
+        const fileCount = await this.contract.getFileCount();
+        fileId = fileCount.toString();
+      }
+
+      return {
+        fileId,
+        txHash: receipt.hash,
+      };
+    } catch (error) {
+      console.error("Error uploading file metadata:", error);
+      throw new Error(`Blockchain upload failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Grant access to a file
+   * @param {string} fileId - File ID
+   * @param {string} recipient - Recipient address
+   * @param {number} expiration - Expiration timestamp (0 for no expiration)
+   * @returns {Promise<{txHash: string}>}
+   */
+  async grantAccess(fileId, recipient, expiration = 0) {
+    try {
+      const tx = await this.contract.grantAccess(fileId, recipient, expiration);
+      const receipt = await tx.wait();
+
+      return {
+        txHash: receipt.hash,
+      };
+    } catch (error) {
+      console.error("Error granting access:", error);
+      throw new Error(`Grant access failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Revoke access to a file
+   * @param {string} fileId - File ID
+   * @param {string} recipient - Recipient address
+   * @returns {Promise<{txHash: string}>}
+   */
+  async revokeAccess(fileId, recipient) {
+    try {
+      const tx = await this.contract.revokeAccess(fileId, recipient);
+      const receipt = await tx.wait();
+
+      return {
+        txHash: receipt.hash,
+      };
+    } catch (error) {
+      console.error("Error revoking access:", error);
+      throw new Error(`Revoke access failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Check if a user has access to a file
+   * @param {string} fileId - File ID
+   * @param {string} userAddress - User address
+   * @returns {Promise<boolean>}
+   */
+  async checkAccess(fileId, userAddress) {
+    try {
+      const hasAccess = await this.contract.checkAccess(fileId, userAddress);
+      return hasAccess;
+    } catch (error) {
+      console.error("Error checking access:", error);
+      throw new Error(`Check access failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get file metadata
+   * @param {string} fileId - File ID
+   * @returns {Promise<Object>} File metadata
+   */
+  async getFileMetadata(fileId) {
+    try {
+      const file = await this.contract.getFile(fileId);
+      return {
+        id: file.id.toString(),
+        owner: file.owner,
+        ipfsHash: file.ipfsHash,
+        encryptedKeyHash: file.encryptedKeyHash,
+        timestamp: file.timestamp.toString(),
+      };
+    } catch (error) {
+      console.error("Error getting file metadata:", error);
+      throw new Error(`Get file metadata failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Log an access attempt
+   * @param {string} fileId - File ID
+   * @param {string} userAddress - User address
+   * @param {boolean} success - Whether access was successful
+   * @returns {Promise<{txHash: string}>}
+   */
+  async logAccess(fileId, userAddress, success) {
+    try {
+      const tx = await this.contract.logAccess(fileId, userAddress, success);
+      const receipt = await tx.wait();
+
+      return {
+        txHash: receipt.hash,
+      };
+    } catch (error) {
+      console.error("Error logging access:", error);
+      // Don't throw - logging failures shouldn't break the flow
+      return { txHash: null };
+    }
+  }
+
+  /**
+   * Get audit trail events for a file
+   * @param {string} fileId - File ID
+   * @param {number} fromBlock - Starting block number (optional)
+   * @returns {Promise<Array>} Array of events
+   */
+  async getAuditTrail(fileId, fromBlock = 0) {
+    try {
+      const filter = this.contract.filters.AccessAttempt(fileId);
+      const events = await this.contract.queryFilter(filter, fromBlock);
+
+      return events.map((event) => ({
+        fileId: event.args.fileId.toString(),
+        user: event.args.user,
+        success: event.args.success,
+        timestamp: event.args.timestamp.toString(),
+        blockNumber: event.blockNumber,
+        txHash: event.transactionHash,
+      }));
+    } catch (error) {
+      console.error("Error getting audit trail:", error);
+      throw new Error(`Get audit trail failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get files owned by an address
+   * @param {string} ownerAddress - Owner address
+   * @returns {Promise<Array<string>>} Array of file IDs
+   */
+  async getFilesByOwner(ownerAddress) {
+    try {
+      const fileIds = await this.contract.getFilesByOwner(ownerAddress);
+      return fileIds.map((id) => id.toString());
+    } catch (error) {
+      console.error("Error getting files by owner:", error);
+      throw new Error(`Get files by owner failed: ${error.message}`);
+    }
+  }
+}
+
+export default new BlockchainService();
+

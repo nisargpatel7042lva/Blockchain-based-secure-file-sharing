@@ -10,8 +10,12 @@
   ],
   "scripts": {
     "contracts:compile": "cd contracts && npx hardhat compile",
-    "contracts:deploy": "cd contracts && npx hardhat run scripts/deploy.js",
+    "contracts:deploy": "cd contracts && npx hardhat run scripts/deploy.js --network amoy",
+    "contracts:deploy:amoy": "cd contracts && npm run deploy:amoy",
+    "contracts:deploy:mumbai": "cd contracts && npm run deploy:mumbai",
+    "contracts:test-rpc": "cd contracts && npm run test:rpc",
     "setup:contracts": "node scripts/setup-contracts.js",
+    "generate:test-key": "node scripts/generate-test-key.js",
     "backend:dev": "cd backend && npm run dev",
     "frontend:dev": "cd frontend && npm run dev",
     "install:all": "npm install && cd contracts && npm install && cd ../backend && npm install && cd ../frontend && npm install"

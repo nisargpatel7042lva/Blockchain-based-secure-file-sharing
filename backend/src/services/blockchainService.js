@@ -29,16 +29,23 @@ try {
 
 class BlockchainService {
   constructor() {
-    const rpcUrl = process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc-mumbai.maticvigil.com";
+    // Use Amoy (new) or Mumbai (deprecated) testnet
+    const rpcUrl = process.env.POLYGON_AMOY_RPC_URL || process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc.ankr.com/polygon_amoy";
     const privateKey = process.env.PRIVATE_KEY;
     const contractAddress = process.env.FILE_REGISTRY_CONTRACT_ADDRESS;
 
     if (!privateKey) {
-      throw new Error("PRIVATE_KEY not set in environment variables");
+      console.warn("⚠️  PRIVATE_KEY not set in environment variables");
+      console.warn("   Blockchain features will be disabled. Set PRIVATE_KEY in backend/.env to enable.");
+      this.initialized = false;
+      return;
     }
 
     if (!contractAddress) {
-      throw new Error("FILE_REGISTRY_CONTRACT_ADDRESS not set in environment variables");
+      console.warn("⚠️  FILE_REGISTRY_CONTRACT_ADDRESS not set in environment variables");
+      console.warn("   Deploy contracts first and set the address in backend/.env");
+      this.initialized = false;
+      return;
     }
 
     // Initialize provider and signer
@@ -52,9 +59,16 @@ class BlockchainService {
       this.signer
     );
 
-    console.log("Blockchain service initialized");
-    console.log("Contract address:", contractAddress);
-    console.log("Signer address:", this.signer.address);
+    this.initialized = true;
+    console.log("✓ Blockchain service initialized");
+    console.log("  Contract address:", contractAddress);
+    console.log("  Signer address:", this.signer.address);
+  }
+
+  _checkInitialized() {
+    if (!this.initialized) {
+      throw new Error("Blockchain service not initialized. Please set PRIVATE_KEY and FILE_REGISTRY_CONTRACT_ADDRESS in backend/.env");
+    }
   }
 
   /**
@@ -64,6 +78,7 @@ class BlockchainService {
    * @returns {Promise<{fileId: string, txHash: string}>}
    */
   async uploadFileMetadata(ipfsHash, encryptedKeyHash) {
+    this._checkInitialized();
     try {
       const tx = await this.contract.uploadFile(ipfsHash, encryptedKeyHash);
       const receipt = await tx.wait();
@@ -108,6 +123,7 @@ class BlockchainService {
    * @returns {Promise<{txHash: string}>}
    */
   async grantAccess(fileId, recipient, expiration = 0) {
+    this._checkInitialized();
     try {
       const tx = await this.contract.grantAccess(fileId, recipient, expiration);
       const receipt = await tx.wait();
@@ -128,6 +144,7 @@ class BlockchainService {
    * @returns {Promise<{txHash: string}>}
    */
   async revokeAccess(fileId, recipient) {
+    this._checkInitialized();
     try {
       const tx = await this.contract.revokeAccess(fileId, recipient);
       const receipt = await tx.wait();
@@ -148,6 +165,7 @@ class BlockchainService {
    * @returns {Promise<boolean>}
    */
   async checkAccess(fileId, userAddress) {
+    this._checkInitialized();
     try {
       const hasAccess = await this.contract.checkAccess(fileId, userAddress);
       return hasAccess;
@@ -163,6 +181,7 @@ class BlockchainService {
    * @returns {Promise<Object>} File metadata
    */
   async getFileMetadata(fileId) {
+    this._checkInitialized();
     try {
       const file = await this.contract.getFile(fileId);
       return {
@@ -186,6 +205,10 @@ class BlockchainService {
    * @returns {Promise<{txHash: string}>}
    */
   async logAccess(fileId, userAddress, success) {
+    if (!this.initialized) {
+      // Don't throw for logging - just skip
+      return { txHash: null };
+    }
     try {
       const tx = await this.contract.logAccess(fileId, userAddress, success);
       const receipt = await tx.wait();
@@ -207,6 +230,7 @@ class BlockchainService {
    * @returns {Promise<Array>} Array of events
    */
   async getAuditTrail(fileId, fromBlock = 0) {
+    this._checkInitialized();
     try {
       const filter = this.contract.filters.AccessAttempt(fileId);
       const events = await this.contract.queryFilter(filter, fromBlock);
@@ -231,6 +255,7 @@ class BlockchainService {
    * @returns {Promise<Array<string>>} Array of file IDs
    */
   async getFilesByOwner(ownerAddress) {
+    this._checkInitialized();
     try {
       const fileIds = await this.contract.getFilesByOwner(ownerAddress);
       return fileIds.map((id) => id.toString());

@@ -110,3 +110,5 @@ The code still supports Mumbai for legacy deployments, but you'll see warnings. 
 - Redeploy contracts to Amoy
 - Update contract addresses in backend/frontend .env files
 
+
+

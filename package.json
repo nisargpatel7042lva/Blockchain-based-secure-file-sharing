@@ -10,7 +10,9 @@
   ],
   "scripts": {
     "contracts:compile": "cd contracts && npx hardhat compile",
-    "contracts:deploy": "cd contracts && npx hardhat run scripts/deploy.js --network amoy",
+    "contracts:deploy": "cd contracts && npm run deploy:sepolia",
+    "contracts:deploy:sepolia": "cd contracts && npm run deploy:sepolia",
+    "contracts:deploy:mainnet": "cd contracts && npm run deploy:mainnet",
     "contracts:deploy:amoy": "cd contracts && npm run deploy:amoy",
     "contracts:deploy:mumbai": "cd contracts && npm run deploy:mumbai",
     "contracts:test-rpc": "cd contracts && npm run test:rpc",

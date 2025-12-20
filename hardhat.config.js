@@ -39,21 +39,39 @@ module.exports = {
     hardhat: {
       chainId: 1337,
     },
+    sepolia: {
+      url: process.env.ETHEREUM_SEPOLIA_RPC_URL || process.env.ALCHEMY_SEPOLIA_URL || "https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY",
+      accounts: getValidPrivateKey(),
+      chainId: 11155111,
+      timeout: 180000, // 180 seconds
+      gas: "auto",
+      gasPrice: "auto",
+    },
+    mainnet: {
+      url: process.env.ETHEREUM_MAINNET_RPC_URL || process.env.ALCHEMY_MAINNET_URL || "https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY",
+      accounts: getValidPrivateKey(),
+      chainId: 1,
+      timeout: 180000,
+      gas: "auto",
+      gasPrice: "auto",
+    },
+    // Legacy Polygon networks (kept for backward compatibility)
     mumbai: {
       url: process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc-mumbai.matic.today",
       accounts: getValidPrivateKey(),
       chainId: 80001,
-      timeout: 120000, // 120 seconds
+      timeout: 120000,
       gas: "auto",
       gasPrice: "auto",
     },
     amoy: {
-      url: process.env.POLYGON_AMOY_RPC_URL || "https://rpc.ankr.com/polygon_amoy",
+      url: process.env.POLYGON_AMOY_RPC_URL || "https://polygon-amoy.drpc.org",
       accounts: getValidPrivateKey(),
       chainId: 80002,
-      timeout: 120000, // 120 seconds
+      timeout: 180000,
       gas: "auto",
       gasPrice: "auto",
+      httpHeaders: {},
     },
     polygon: {
       url: process.env.POLYGON_MAINNET_RPC_URL || "https://polygon-rpc.com",

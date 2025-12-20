@@ -29,8 +29,12 @@ try {
 
 class BlockchainService {
   constructor() {
-    // Use Amoy (new) or Mumbai (deprecated) testnet
-    const rpcUrl = process.env.POLYGON_AMOY_RPC_URL || process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc.ankr.com/polygon_amoy";
+    // Use Ethereum Sepolia (default) or legacy Polygon networks
+    const rpcUrl = process.env.ALCHEMY_SEPOLIA_URL || 
+                   process.env.ETHEREUM_SEPOLIA_RPC_URL || 
+                   process.env.POLYGON_AMOY_RPC_URL || 
+                   process.env.POLYGON_MUMBAI_RPC_URL || 
+                   "https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY";
     const privateKey = process.env.PRIVATE_KEY;
     const contractAddress = process.env.FILE_REGISTRY_CONTRACT_ADDRESS;
 

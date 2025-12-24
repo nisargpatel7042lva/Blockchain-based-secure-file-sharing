@@ -97,7 +97,7 @@ export default function AuditTrail({ fileId }) {
                 </div>
               </div>
               <a
-                href={`https://mumbai.polygonscan.com/tx/${event.txHash}`}
+                href={`https://sepolia.etherscan.io/tx/${event.txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-blue-600 hover:underline"

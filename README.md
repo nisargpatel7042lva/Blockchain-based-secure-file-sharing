@@ -61,21 +61,30 @@ npm install
 npm run install:all
 ```
 
-### 2. Configure IPFS
+### 2. Configure IPFS (Recommended: Use Infura - No Installation Needed)
 
-**Option A: Local IPFS Node**
-```bash
-# Install IPFS
-npm install -g ipfs
+**Option A: Infura IPFS (Recommended)**
+1. Sign up at [Infura](https://infura.io) (free)
+2. Create a new project → Select "IPFS"
+3. Copy Project ID and Project Secret
+4. Update `backend/.env`:
+   ```env
+   IPFS_API_URL=https://ipfs.infura.io:5001
+   IPFS_PROJECT_ID=your_project_id
+   IPFS_PROJECT_SECRET=your_project_secret
+   ```
 
-# Initialize and start IPFS
-ipfs init
-ipfs daemon
-```
-
-**Option B: Use Infura/Pinata**
-- Sign up at [Infura](https://infura.io) or [Pinata](https://pinata.cloud)
+**Option B: Pinata**
+- Sign up at [Pinata](https://pinata.cloud)
 - Get your API credentials
+- Update `backend/.env` with Pinata credentials
+
+**Option C: Local IPFS Node (Advanced)**
+- Install IPFS Desktop: https://docs.ipfs.tech/install/ipfs-desktop/
+- Or install CLI and run `ipfs daemon`
+- Update `backend/.env`: `IPFS_API_URL=http://localhost:5001`
+
+See `IPFS_SETUP.md` for detailed instructions.
 
 ### 3. Deploy Smart Contracts
 

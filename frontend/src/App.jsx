@@ -65,7 +65,7 @@ function Home() {
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="min-h-screen bg-gray-50">
         <nav className="bg-white shadow-sm border-b">
           <div className="container mx-auto px-4 py-4">

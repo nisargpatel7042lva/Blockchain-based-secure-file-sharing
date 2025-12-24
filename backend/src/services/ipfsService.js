@@ -2,11 +2,16 @@ import { create } from "ipfs-http-client";
 
 class IPFSService {
   constructor() {
-    const ipfsUrl = process.env.IPFS_API_URL || "http://localhost:5001";
+    // Use Infura IPFS by default (no local installation needed)
+    // Or use custom IPFS_API_URL if provided
+    const ipfsUrl = process.env.IPFS_API_URL || "https://ipfs.infura.io:5001";
     
-    // Configure IPFS client
-    const auth = process.env.IPFS_PROJECT_ID && process.env.IPFS_PROJECT_SECRET
-      ? `Basic ${Buffer.from(`${process.env.IPFS_PROJECT_ID}:${process.env.IPFS_PROJECT_SECRET}`).toString("base64")}`
+    // Configure IPFS client with Infura authentication
+    const projectId = process.env.IPFS_PROJECT_ID || process.env.INFURA_PROJECT_ID;
+    const projectSecret = process.env.IPFS_PROJECT_SECRET || process.env.INFURA_PROJECT_SECRET;
+    
+    const auth = projectId && projectSecret
+      ? `Basic ${Buffer.from(`${projectId}:${projectSecret}`).toString("base64")}`
       : undefined;
 
     const config = {
@@ -16,7 +21,12 @@ class IPFSService {
 
     try {
       this.ipfs = create(config);
-      console.log("IPFS client initialized:", ipfsUrl);
+      console.log("IPFS client initialized:", ipfsUrl.replace(/\/\/.*@/, "//***@") || ipfsUrl);
+      if (!auth && ipfsUrl.includes("infura.io")) {
+        console.warn("⚠️  IPFS_PROJECT_ID and IPFS_PROJECT_SECRET not set.");
+        console.warn("   Using Infura IPFS without auth (may have rate limits).");
+        console.warn("   Get free credentials at: https://infura.io/");
+      }
     } catch (error) {
       console.error("Failed to initialize IPFS client:", error);
       throw error;

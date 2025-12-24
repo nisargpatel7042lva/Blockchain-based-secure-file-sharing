@@ -9,6 +9,8 @@
     "frontend"
   ],
   "scripts": {
+    "dev": "echo \"Starting backend and frontend...\" && echo \"Backend: npm run backend:dev\" && echo \"Frontend: npm run frontend:dev\" && echo \"\" && echo \"Run in separate terminals:\" && echo \"Terminal 1: npm run backend:dev\" && echo \"Terminal 2: npm run frontend:dev\"",
+    "start": "npm run dev",
     "contracts:compile": "cd contracts && npx hardhat compile",
     "contracts:deploy": "cd contracts && npm run deploy:sepolia",
     "contracts:deploy:sepolia": "cd contracts && npm run deploy:sepolia",
@@ -19,7 +21,9 @@
     "setup:contracts": "node scripts/setup-contracts.js",
     "generate:test-key": "node scripts/generate-test-key.js",
     "backend:dev": "cd backend && npm run dev",
+    "backend:start": "cd backend && npm start",
     "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
     "install:all": "npm install && cd contracts && npm install && cd ../backend && npm install && cd ../frontend && npm install"
   },
   "keywords": [
@@ -30,6 +34,8 @@
     "encryption"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ipfs": "^0.66.1"
+  }
 }
-

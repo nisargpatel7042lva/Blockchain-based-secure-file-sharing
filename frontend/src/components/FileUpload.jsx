@@ -133,7 +133,7 @@ export default function FileUpload({ onUploadSuccess }) {
             <div>
               <span className="font-medium">Transaction Hash:</span>{" "}
               <a
-                href={`https://mumbai.polygonscan.com/tx/${result.txHash}`}
+                href={`https://sepolia.etherscan.io/tx/${result.txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline"

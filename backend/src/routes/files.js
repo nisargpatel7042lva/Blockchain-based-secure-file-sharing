@@ -58,7 +58,17 @@ router.post("/upload", upload.single("file"), async (req, res, next) => {
     const encryptedFile = encryptFile(req.file.buffer, encryptionKey);
     
     // Upload to IPFS
-    const ipfsHash = await ipfsService.uploadToIPFS(encryptedFile);
+    let ipfsHash;
+    try {
+      ipfsHash = await ipfsService.uploadToIPFS(encryptedFile);
+    } catch (ipfsError) {
+      // Return a user-friendly error for IPFS issues
+      return res.status(500).json({ 
+        error: "File upload failed",
+        message: ipfsError.message,
+        details: "Please configure IPFS credentials in backend/.env. See server logs for details."
+      });
+    }
     
     // Hash the encrypted key (for blockchain storage)
     const encryptedKeyHash = hashString(encryptionKey);

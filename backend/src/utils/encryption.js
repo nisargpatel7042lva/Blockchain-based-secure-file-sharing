@@ -19,14 +19,24 @@ export function encryptFile(fileBuffer, key) {
     const wordArray = CryptoJS.lib.WordArray.create(fileBuffer);
     const keyHex = CryptoJS.enc.Hex.parse(key);
     
+    // Generate random IV for CBC mode (16 bytes = 128 bits)
+    const iv = CryptoJS.lib.WordArray.random(16);
+    
     const encrypted = CryptoJS.AES.encrypt(wordArray, keyHex, {
+      iv: iv,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
     });
 
-    // Convert ciphertext to buffer
+    // Convert IV and ciphertext to hex
+    const ivHex = iv.toString(CryptoJS.enc.Hex);
     const encryptedHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
-    return Buffer.from(encryptedHex, "hex");
+    
+    // Combine IV (16 bytes = 32 hex chars) + encrypted data
+    // Format: [IV (32 hex chars)][Encrypted Data]
+    const combinedHex = ivHex + encryptedHex;
+    
+    return Buffer.from(combinedHex, "hex");
   } catch (error) {
     throw new Error(`Encryption failed: ${error.message}`);
   }
@@ -40,20 +50,41 @@ export function encryptFile(fileBuffer, key) {
  */
 export function decryptFile(encryptedBuffer, key) {
   try {
-    const encryptedHex = encryptedBuffer.toString("hex");
+    const encryptedBytes = new Uint8Array(encryptedBuffer);
+    
+    // Extract IV (first 16 bytes) and encrypted data (rest)
+    const ivBytes = encryptedBytes.slice(0, 16);
+    const ciphertextBytes = encryptedBytes.slice(16);
+    
+    // Convert to hex strings
+    const ivHex = Array.from(ivBytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    const encryptedHex = Array.from(ciphertextBytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    
     const keyHex = CryptoJS.enc.Hex.parse(key);
+    const ivWordArray = CryptoJS.enc.Hex.parse(ivHex);
     
     const cipherParams = CryptoJS.lib.CipherParams.create({
       ciphertext: CryptoJS.enc.Hex.parse(encryptedHex),
     });
 
     const decrypted = CryptoJS.AES.decrypt(cipherParams, keyHex, {
+      iv: ivWordArray,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
     });
 
+    // Convert decrypted WordArray back to bytes
     const decryptedWordArray = decrypted;
-    return Buffer.from(decryptedWordArray.toString(CryptoJS.enc.Utf8), "utf8");
+    const decryptedHex = decryptedWordArray.toString(CryptoJS.enc.Hex);
+    const decryptedBytes = new Uint8Array(
+      decryptedHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+    );
+    
+    return Buffer.from(decryptedBytes);
   } catch (error) {
     throw new Error(`Decryption failed: ${error.message}`);
   }

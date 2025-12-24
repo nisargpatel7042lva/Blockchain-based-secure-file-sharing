@@ -1,9 +1,33 @@
+// CRITICAL: Load .env FIRST before any other imports that use environment variables
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { existsSync } from "fs";
+
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env file from root directory (two levels up from backend/src/)
+const rootEnvPath = join(__dirname, "../../.env");
+dotenv.config({ path: rootEnvPath });
+
+// Debug: Log if .env file was loaded
+console.log("🔍 DEBUG - Loading .env from root:", rootEnvPath);
+console.log("🔍 DEBUG - .env file exists:", existsSync(rootEnvPath));
+if (!existsSync(rootEnvPath)) {
+  console.error("❌ ERROR: .env file not found at:", rootEnvPath);
+  console.error("   Please create .env file in the root directory (C:\\dev\\Tgen\\.env)");
+} else {
+  console.log("✅ .env file loaded successfully");
+  console.log("🔍 DEBUG - IPFS_API_URL:", process.env.IPFS_API_URL || "(not set)");
+  console.log("🔍 DEBUG - PINATA_API_KEY:", process.env.PINATA_API_KEY ? "SET" : "NOT SET");
+}
+
+// NOW import other modules (they will have access to environment variables)
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import fileRoutes from "./routes/files.js";
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
